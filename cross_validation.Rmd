@@ -1,0 +1,22 @@
+---
+title: "Cross Validation"
+author: "Mia Isaacs"
+date: "2024-11-12"
+output: github_document
+---
+
+```{r}
+library(tidyverse)
+library(modelr)
+library(mgcv)
+```
+
+
+
+
+
+
+
+
+
+
