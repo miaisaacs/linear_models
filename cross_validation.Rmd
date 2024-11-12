@@ -9,11 +9,91 @@ output: github_document
 library(tidyverse)
 library(modelr)
 library(mgcv)
+library(SemiPar)
+
+set.seed(1)
 ```
 
+look at LIDAR data
 
+```{r}
+data("lidar")
 
+lidar_df =
+  lidar |> 
+  as_tibble() |> 
+  mutate(id = row_number())
+```
 
+```{r}
+lidar_df |> 
+  ggplot(aes(x = range, y = logratio)) +
+  geom_point()
+```
+
+## trying to do CV
+
+we'll compare 3 models - one linear, one smooth, one wiggly
+
+construct training and testing df
+
+```{r}
+train_df = sample_frac(lidar_df, size = .8)
+test_df = anti_join(lidar_df, train_df, by = "id")
+```
+
+look at these
+
+```{r}
+ggplot(train_df, aes(x = range, y = logratio)) +
+  geom_point() +
+  geom_point(data = test_df, color = "lightpink")
+```
+
+fit three models
+
+```{r}
+linear_mod = lm(logratio ~ range, data = train_df)
+smooth_mod = gam(logratio ~ s(range), data = train_df)
+wiggle_mod = gam(logratio ~ s(range, k = 30), sp = 10e-6, data = train_df)
+```
+
+look at fits
+
+```{r}
+train_df |> 
+  add_predictions(linear_mod) |> 
+  ggplot(aes(x = range, y = logratio)) +
+  geom_point() +
+  geom_point(data = test_df, color = "lightpink") +
+  geom_line(aes(y = pred), color = "tomato")
+```
+
+```{r}
+train_df |> 
+  add_predictions(smooth_mod) |> 
+  ggplot(aes(x = range, y = logratio)) +
+  geom_point() +
+  geom_point(data = test_df, color = "lightpink") +
+  geom_line(aes(y = pred), color = "tomato")
+```
+
+```{r}
+train_df |> 
+  add_predictions(wiggle_mod) |> 
+  ggplot(aes(x = range, y = logratio)) +
+  geom_point() +
+  geom_point(data = test_df, color = "lightpink") +
+  geom_line(aes(y = pred), color = "tomato")
+```
+
+compare these numerically using RMSE
+
+```{r}
+rmse(linear_mod, test_df)
+rmse(smooth_mod, test_df)
+rmse(wiggle_mod, test_df)
+```
 
 
 
